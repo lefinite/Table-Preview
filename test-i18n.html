@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>国际化测试页面</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .lang-switcher {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .lang-btn {
+      padding: 8px 16px;
+      margin: 0 5px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lang-btn:hover {
+      background: #f0f0f0;
+    }
+    .lang-btn.active {
+      background: #007bff;
+      color: white;
+      border-color: #007bff;
+    }
+    .demo-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+    }
+    .demo-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Table Row Preview - 国际化测试</h1>
+    
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="switchLanguage('zh')">中文</button>
+      <button class="lang-btn" onclick="switchLanguage('en')">English</button>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">页面标题:</div>
+      <div data-i18n="pageTitle">表格行预览</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">状态信息:</div>
+      <div data-i18n="selectRow">请选择一行数据</div><br>
+      <div data-i18n="selectRowDesc">在多维表格中选择任意行来预览其内容</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">加载状态:</div>
+      <div data-i18n="loading">正在加载数据...</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">错误信息:</div>
+      <div data-i18n="loadFailed">加载失败</div><br>
+      <div data-i18n="loadFailedDefault">数据加载失败，请重试</div><br>
+      <div data-i18n="loadFailedPermission">加载数据失败，请检查权限或重试</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">字段值:</div>
+      <div data-i18n="emptyValue">空</div><br>
+      <div data-i18n="noData">暂无数据</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">复制功能:</div>
+      <div data-i18n="copyContent">复制内容</div><br>
+      <div data-i18n="copySuccess">已复制！</div><br>
+      <div data-i18n="copyFailed">复制失败</div>
+    </div>
+    
+    <div class="demo-section">
+      <div class="demo-title">字段类型 (部分示例):</div>
+      <div data-i18n="fieldTypes.text">文本</div><br>
+      <div data-i18n="fieldTypes.number">数字</div><br>
+      <div data-i18n="fieldTypes.singleSelect">单选</div><br>
+      <div data-i18n="fieldTypes.multiSelect">多选</div><br>
+      <div data-i18n="fieldTypes.date">日期</div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import i18next from 'https://cdn.skypack.dev/i18next@22.4.15';
+    import $ from 'https://cdn.skypack.dev/jquery@3.6.4';
+    import jqueryI18next from 'https://cdn.skypack.dev/jquery-i18next@1.2.1';
+    
+    // 导入翻译资源
+    const zh = {
+      pageTitle: '表格行预览',
+      selectRow: '请选择一行数据',
+      selectRowDesc: '在多维表格中选择任意行来预览其内容',
+      loading: '正在加载数据...',
+      loadFailed: '加载失败',
+      loadFailedDefault: '数据加载失败，请重试',
+      loadFailedPermission: '加载数据失败，请检查权限或重试',
+      getDataFailed: '获取数据失败，请重试',
+      emptyValue: '空',
+      noData: '暂无数据',
+      copyContent: '复制内容',
+      copySuccess: '已复制！',
+      copyFailed: '复制失败',
+      fieldTypes: {
+        text: '文本',
+        number: '数字',
+        singleSelect: '单选',
+        multiSelect: '多选',
+        date: '日期',
+        checkbox: '复选框',
+        user: '人员',
+        phone: '电话',
+        url: '链接',
+        email: '邮箱'
+      }
+    };
+    
+    const en = {
+      pageTitle: 'Table Row Preview',
+      selectRow: 'Please select a row',
+      selectRowDesc: 'Select any row in the multi-dimensional table to preview its content',
+      loading: 'Loading data...',
+      loadFailed: 'Load Failed',
+      loadFailedDefault: 'Data loading failed, please try again',
+      loadFailedPermission: 'Failed to load data, please check permissions or try again',
+      getDataFailed: 'Failed to get data, please try again',
+      emptyValue: 'Empty',
+      noData: 'No data',
+      copyContent: 'Copy content',
+      copySuccess: 'Copied!',
+      copyFailed: 'Copy failed',
+      fieldTypes: {
+        text: 'Text',
+        number: 'Number',
+        singleSelect: 'Single Select',
+        multiSelect: 'Multi Select',
+        date: 'Date',
+        checkbox: 'Checkbox',
+        user: 'User',
+        phone: 'Phone',
+        url: 'URL',
+        email: 'Email'
+      }
+    };
+    
+    const resources = {
+      zh: { translation: zh },
+      en: { translation: en }
+    };
+    
+    const rerender = () => {
+      $('body').localize();
+    };
+    
+    window.switchLanguage = (lang) => {
+      i18next.changeLanguage(lang, () => {
+        rerender();
+        // 更新按钮状态
+        $('.lang-btn').removeClass('active');
+        $(`.lang-btn:contains('${lang === 'zh' ? '中文' : 'English'}')`).addClass('active');
+      });
+    };
+    
+    $(function() {
+      i18next.init({
+        lng: 'zh',
+        fallbackLng: 'zh',
+        resources
+      }, (err) => {
+        if (err) return console.error(err);
+        jqueryI18next.init(i18next, $, { useOptionsAttr: true });
+        rerender();
+        // 设置默认激活状态
+        $('.lang-btn:first').addClass('active');
+      });
+    });
+  </script>
+</body>
+</html>

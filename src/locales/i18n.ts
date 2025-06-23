@@ -26,16 +26,49 @@ $(function() {
   i18next
     .use(i18nextBrowserLanguageDetector)
     .init({
-      debug: true,
-      fallbackLng: 'en',
+      debug: false,
+      fallbackLng: 'zh',
       resources,
+      detection: {
+        order: ['navigator', 'htmlTag'],
+        caches: ['localStorage']
+      }
     }, (err) => {
       if (err) return console.error(err);
       jqueryI18next.init(i18next, $, { useOptionsAttr: true });
-      bitable.bridge.getLanguage().then((lang) => {
-        i18next.changeLanguage(lang, () => {
-          rerender()
+      
+      // 尝试从飞书获取语言设置
+      if (typeof bitable !== 'undefined' && bitable.bridge && bitable.bridge.getLanguage) {
+        bitable.bridge.getLanguage().then((lang) => {
+          // 将飞书的语言代码映射到我们的语言代码
+          const langMap: Record<string, string> = {
+            'zh-CN': 'zh',
+            'zh-TW': 'zh',
+            'zh-HK': 'zh',
+            'en-US': 'en',
+            'en-GB': 'en',
+            'en': 'en',
+            'zh': 'zh'
+          };
+          const mappedLang = langMap[lang] || (lang.startsWith('zh') ? 'zh' : 'en');
+          i18next.changeLanguage(mappedLang, () => {
+            rerender();
+          });
+        }).catch(() => {
+          // 如果获取飞书语言失败，使用浏览器语言
+          const browserLang = navigator.language;
+          const defaultLang = browserLang.startsWith('zh') ? 'zh' : 'en';
+          i18next.changeLanguage(defaultLang, () => {
+            rerender();
+          });
         });
-      })
+      } else {
+        // 如果不在飞书环境中，使用浏览器语言
+        const browserLang = navigator.language;
+        const defaultLang = browserLang.startsWith('zh') ? 'zh' : 'en';
+        i18next.changeLanguage(defaultLang, () => {
+          rerender();
+        });
+      }
     });
 });

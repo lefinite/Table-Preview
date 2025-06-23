@@ -1,57 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Base Extensions</title>
-  <script type="module" crossorigin src="./assets/index.213a62d1.js"></script>
-  <link rel="stylesheet" href="./assets/index.46930d02.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="pageTitle">表格行预览</title>
+  <script type="module" crossorigin src="./assets/index.0b025e7a.js"></script>
+  <link rel="stylesheet" href="./assets/index.155c8ddc.css">
 </head>
-
 <body>
-  <main class="main p-3 pt-4">
-    <h4 class="mb-3">Edit <code class="code">src/index.ts</code> and save to reload</h3>
-      <form>
-        <div class="mb-3">
-          <label class="form-label">Development guide</label>
-          <div>
-            <a href="https://lark-technologies.larksuite.com/docx/HvCbdSzXNowzMmxWgXsuB2Ngs7d" target="_blank"
-              rel="noopener noreferrer">
-              Base Extensions Guide
-            </a>
-            、
-            <a href="https://bytedance.feishu.cn/docx/HazFdSHH9ofRGKx8424cwzLlnZc" target="_blank"
-              rel="noopener noreferrer">
-              多维表格插件开发指南
-            </a>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">API</label>
-          <div>
-            <a href="https://lark-technologies.larksuite.com/docx/Y6IcdywRXoTYSOxKwWvuLK09sFe" target="_blank"
-              rel="noopener noreferrer">
-              Base Extensions Front-end API
-            </a>
-            、
-            <a href="https://bytedance.feishu.cn/docx/HjCEd1sPzoVnxIxF3LrcKnepnUf" target="_blank"
-              rel="noopener noreferrer">
-              多维表格插件API
-            </a>
-          </div>
-        </div>
-        <div class="mb-3">
-          <label for="tableSelect" class="form-label">Select Table</label>
-          <select id='tableSelect' class="form-select"></select>
-        </div>
-        <button class='btn btn-outline-primary' type="button" id="addRecord">
-          Add Record
-        </button>
-      </form>
-  </main>
+  <div id="app">
+    <!-- 状态卡片：未选择行 -->
+    <div id="statusCard" class="status-card">
+      <div class="status-content">
+        <div class="status-icon">📄</div>
+        <h3 data-i18n="selectRow">请选择一行数据</h3>
+        <p data-i18n="selectRowDesc">在多维表格中选择任意行来预览其内容</p>
+      </div>
+    </div>
+
+    <!-- 加载卡片 -->
+    <div id="loadingCard" class="loading-card" style="display: none;">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p data-i18n="loading">正在加载数据...</p>
+      </div>
+    </div>
+
+    <!-- 预览卡片 -->
+    <div id="previewCard" class="preview-card" style="display: none;">
+      <div id="fieldsContainer" class="fields-container"></div>
+    </div>
+
+    <!-- 错误卡片 -->
+    <div id="errorCard" class="error-card" style="display: none;">
+      <div class="error-content">
+        <div class="error-icon">❌</div>
+        <h3 data-i18n="loadFailed">加载失败</h3>
+        <p id="errorMessage" data-i18n="loadFailedDefault">数据加载失败，请重试</p>
+      </div>
+    </div>
+  </div>
+
   
 </body>
-
 </html>

@@ -1,6 +1,8 @@
 import $ from 'jquery';
 import { bitable, FieldType } from '@lark-base-open/js-sdk';
 import './index.scss';
+import './locales/i18n';
+import i18next from 'i18next';
 
 interface RowData {
   recordId: string;
@@ -54,7 +56,7 @@ class TableRowPreview {
 
   private formatFieldValue(fieldType: FieldType, value: any): string {
     if (value === null || value === undefined || value === '') {
-      return '<span class="empty-value">空</span>';
+      return `<span class="empty-value">${i18next.t('emptyValue')}</span>`;
     }
 
     switch (fieldType) {
@@ -279,7 +281,7 @@ class TableRowPreview {
       navigator.clipboard.writeText(text).then(() => {
         this.showCopySuccess(button);
       }).catch((err) => {
-        console.error('Clipboard API 复制失败:', err);
+        console.error('Clipboard API', i18next.t('copyFailed'), ':', err);
         // 如果 Clipboard API 失败，尝试使用传统方法
         this.fallbackCopyToClipboard(text, button);
       });
@@ -310,16 +312,16 @@ class TableRowPreview {
       if (success) {
         this.showCopySuccess(button);
       } else {
-        console.error('execCommand 复制失败');
+        console.error('execCommand', i18next.t('copyFailed'));
       }
     } catch (err) {
-      console.error('复制到剪贴板失败:', err);
+      console.error(i18next.t('copyFailed'), ':', err);
     }
   }
 
   private showCopySuccess(button: JQuery<HTMLElement>): void {
     // 可以在这里添加其他成功提示，比如显示toast消息
-    console.log('复制成功');
+    console.log(i18next.t('copySuccess'));
   }
 
   private formatRichText(richTextArray: any[]): string {
@@ -410,8 +412,8 @@ class TableRowPreview {
 
       await this.loadRowData(tableId, recordId);
     } catch (error) {
-      console.error('处理选择变化失败:', error);
-      this.showError('获取数据失败，请重试');
+      console.error(i18next.t('selectionChangeFailed'), error);
+      this.showError(i18next.t('getDataFailed'));
     }
   }
 
@@ -456,8 +458,8 @@ class TableRowPreview {
         fields
       }, rowIndex);
     } catch (error) {
-      console.error('加载行数据失败:', error);
-      this.showError('加载数据失败，请检查权限或重试');
+      console.error(i18next.t('loadRowDataFailed'), error);
+      this.showError(i18next.t('loadFailedPermission'));
     }
   }
 
@@ -498,13 +500,13 @@ class TableRowPreview {
       <div class="field-item ${isEmpty ? 'empty' : ''}" style="--index: ${index}">
         <div class="field-header">
           <span class="field-name">${fieldMeta.name}</span>
-          ${!isEmpty ? `<button class="copy-btn" title="复制内容">
+          ${!isEmpty ? `<button class="copy-btn" title="${i18next.t('copyContent')}">
             <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V18M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7C16 8.10457 15.1046 9 14 9H10C8.89543 9 8 8.10457 8 7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>` : ''}
         </div>
-        <div class="field-value">${isEmpty ? '<span class="empty-value">暂无数据</span>' : formattedValue}</div>
+        <div class="field-value">${isEmpty ? `<span class="empty-value">${i18next.t('noData')}</span>` : formattedValue}</div>
       </div>
     `);
     
