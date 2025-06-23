@@ -1,8 +1,8 @@
 {
-  "name": "HTML Template",
+  "name": "Table Row Preview",
   "version": "1.0.0",
   "type": "module",
-  "description": "HTML TypeScript template, using Vite bundler",
+  "description": "飞书多维表格行内容预览插件 - 选中任意单元格查看完整行数据",
   "scripts": {
     "dev": "vite",
     "start": "npm run dev",

@@ -1,2 +1,298 @@
-@import 'reset-css';
-@import "bootstrap/scss/bootstrap";
+// 包豪斯设计理念：简洁、功能性、几何形状
+// 色彩：白色为主，黑色文字，灰色辅助
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 在文件顶部添加 iOS 风格的颜色变量 */
+:root {
+  --system-blue: #007AFF;
+  --system-green: #34C759;
+  --system-red: #FF3B30;
+  --system-orange: #FF9500;
+  --system-gray: #8E8E93;
+  --system-gray2: #AEAEB2;
+  --system-gray5: #E5E5EA;
+  --system-gray6: #F2F2F7;
+  --system-background: #FFFFFF;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --animation-duration: 0.3s;
+}
+
+/* 修改 body 样式 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+  background-color: #FFFFFF; /* 从 var(--system-gray6) 改为白色 */
+  color: #000000;
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  width: 100%;
+  height: 100vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+/* 状态卡片 */
+.status-card {
+  text-align: center;
+  max-width: 400px;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 24px;
+  transition: transform var(--animation-duration) ease;
+  
+  .status-content {
+    .status-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    h3 {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #000000;
+    }
+    
+    p {
+      font-size: 15px;
+      color: var(--system-gray);
+      font-weight: 400;
+    }
+  }
+}
+
+/* 预览卡片 */
+.preview-card {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px;
+  min-height: fit-content;
+  padding: 16px;
+}
+
+/* 错误卡片 */
+.error-card {
+  text-align: center;
+  max-width: 400px;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 24px;
+  
+  .error-content {
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: var(--system-red);
+    }
+    
+    h3 {
+      font-size: 20px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--system-red);
+    }
+    
+    p {
+      font-size: 15px;
+      color: var(--system-gray);
+      font-weight: 400;
+    }
+  }
+}
+
+/* 加载卡片 */
+.loading-card {
+  text-align: center;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 24px;
+  
+  .loading-content {
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--system-gray5);
+      border-top: 2px solid var(--system-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    p {
+      font-size: 15px;
+      color: var(--system-gray);
+      font-weight: 400;
+    }
+  }
+}
+
+/* 响应式设计 - 简化选择器层级 */
+@media (max-width: 768px) {
+  #app {
+    padding: 12px;
+  }
+  
+  .status-card, .loading-card, .error-card {
+    padding: 20px;
+  }
+  
+  .preview-card {
+    padding: 12px;
+  }
+  
+  .field-value {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .field-name {
+    font-size: 14px;
+  }
+}
+
+/* 字段容器 */
+.fields-container {
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding-right: 8px;
+  
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+/* 字段项 - 简化选择器层级 */
+.field-item {
+  margin-bottom: 16px;
+  position: relative;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  animation: fadeIn 0.3s ease forwards;
+  animation-delay: calc(var(--index, 0) * 0.05s);
+  opacity: 0;
+  
+  &:hover {
+    transform: translateY(-1px);
+    
+    .copy-btn {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+/* 字段头部 - 简化选择器层级 */
+.field-header {
+  position: relative;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 字段名称 - 简化选择器层级 */
+.field-name {
+  font-weight: 500;
+  color: #000000;
+  font-size: 15px;
+}
+
+/* 复制按钮 - 简化选择器层级 */
+.copy-btn {
+  background: var(--system-gray6);
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--system-gray);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  width: 26px;
+  height: 26px;
+  
+  &:hover {
+    background: var(--system-gray5);
+    color: var(--system-blue);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.copy-icon {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
+
+/* 字段值 - 简化选择器层级 */
+.field-value {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background-color: var(--system-gray6);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background-color 0.2s ease;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  
+  &.empty {
+    color: var(--system-gray);
+    font-style: italic;
+  }
+}
+
+.empty-value {
+  color: var(--system-gray);
+  font-style: italic;
+}
+
+/* 添加到文件末尾 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.field-item {
+  animation: fadeIn 0.3s ease forwards;
+  animation-delay: calc(var(--index, 0) * 0.05s);
+  opacity: 0;
+}
+
+/* 为不同的卡片添加过渡效果 */
+.status-card, .loading-card, .error-card, .preview-card {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
