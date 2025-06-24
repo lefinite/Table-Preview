@@ -1,12 +1,14 @@
 # 📋 Table Row Preview
 
-> 飞书多维表格行内容预览插件 - 让数据查看更高效
+**官网地址：[https://lefinite.github.io/Table-Preview/](https://lefinite.github.io/Table-Preview/)**
+
+> 飞书多维表格行内容预览插件 - 让数据管理更高效、更直观
 
 比官方好用10倍预览功能，随便点哪里都能预览整行内容
 ![Table Preview](dist/assets/demo.gif)
 
 
-双击编辑，优雅的Markdown编辑体验，支持Markdown键盘快捷键语法
+支持双击编辑功能，提供优雅的Markdown编辑体验，完整支持Markdown语法和键盘快捷键
 ![Markdown edit](dist/assets/Markdown_edit.gif)
 
 
