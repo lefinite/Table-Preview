@@ -165,7 +165,17 @@ class TableRowPreview {
         if (Array.isArray(value)) {
           return value.map(attachment => {
             if (typeof attachment === 'object' && attachment.name) {
-              return `<span class="attachment-item">📎 ${this.escapeHtml(attachment.name)}</span>`;
+              const fileName = attachment.name;
+              const isImage = this.isImageFile(fileName);
+              
+              if (isImage && attachment.url) {
+                return `<div class="attachment-item image-attachment">
+                  <img src="${this.escapeHtml(attachment.url)}" alt="${this.escapeHtml(fileName)}" class="attachment-image" loading="lazy" />
+                  <span class="attachment-name">📷 ${this.escapeHtml(fileName)}</span>
+                </div>`;
+              } else {
+                return `<span class="attachment-item">📎 ${this.escapeHtml(fileName)}</span>`;
+              }
             } else if (typeof attachment === 'object') {
               return `<span class="attachment-item">${this.escapeHtml(JSON.stringify(attachment))}</span>`;
             }
@@ -299,6 +309,54 @@ class TableRowPreview {
   private isEditableTextType(fieldType: FieldType): boolean {
     // 支持编辑的字段类型：文本、数字、电话号码
     return [FieldType.Text, FieldType.Number, FieldType.Phone].includes(fieldType);
+  }
+
+  // 判断文件是否为图片类型
+  private isImageFile(fileName: string): boolean {
+    if (!fileName) return false;
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg', '.ico'];
+    const extension = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    return imageExtensions.includes(extension);
+  }
+
+  // 判断是否为附件字段
+  private isImageAttachmentField(fieldType: any, value: any): boolean {
+    // 对所有附件字段返回true，不显示复制按钮
+    return fieldType === FieldType.Attachment;
+  }
+
+  // 显示图片模态框
+  private showImageModal(imgSrc: string, imgAlt: string): void {
+    // 移除已存在的模态框
+    $('.image-modal').remove();
+    
+    // 创建模态框HTML
+    const modalHtml = `
+      <div class="image-modal">
+        <div class="image-modal-backdrop"></div>
+        <div class="image-modal-content">
+          <button class="image-modal-close">&times;</button>
+          <img src="${this.escapeHtml(imgSrc)}" alt="${this.escapeHtml(imgAlt)}" class="image-modal-img" />
+          <div class="image-modal-caption">${this.escapeHtml(imgAlt)}</div>
+        </div>
+      </div>
+    `;
+    
+    // 添加到页面
+    $('body').append(modalHtml);
+    
+    // 绑定关闭事件
+    $('.image-modal-close, .image-modal-backdrop').on('click', () => {
+      $('.image-modal').remove();
+    });
+    
+    // ESC键关闭
+    $(document).on('keydown.imageModal', (e) => {
+      if (e.key === 'Escape') {
+        $('.image-modal').remove();
+        $(document).off('keydown.imageModal');
+      }
+    });
   }
 
   // 键盘事件和失焦事件处理已移至事件委托中
@@ -1209,6 +1267,17 @@ class TableRowPreview {
       // 清理旧的监听器
       this.cleanup();
       
+      // 使用事件委托处理图片点击事件
+      $('#fieldsContainer').on('click', '.attachment-image', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const imgSrc = $(e.target).attr('src') || '';
+        const imgAlt = $(e.target).attr('alt') || '';
+        if (imgSrc) {
+          this.showImageModal(imgSrc, imgAlt);
+        }
+      });
+      
       // 使用事件委托处理点击事件
       $('#fieldsContainer').on('click', '[data-action]', (e) => {
         e.preventDefault();
@@ -1413,7 +1482,7 @@ class TableRowPreview {
         <div class="field-header">
           <span class="field-name">${fieldMeta.name}</span>
           <div class="field-actions">
-            ${!isEmpty ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${this.escapeHtml(rawValue)}">
+            ${!isEmpty && !this.isImageAttachmentField(fieldMeta.type, rawValue) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${this.escapeHtml(rawValue)}">
               <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V18M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7C16 8.10457 15.1046 9 14 9H10C8.89543 9 8 8.10457 8 7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
