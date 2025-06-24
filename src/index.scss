@@ -5,6 +5,20 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* 全局隐藏所有滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* 全局隐藏所有Webkit滚动条 */
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* 在文件顶部添加 iOS 风格的颜色变量 */
@@ -17,6 +31,7 @@
   --system-gray2: #AEAEB2;
   --system-gray5: #E5E5EA;
   --system-gray6: #F2F2F7;
+  --system-gray6-lighter: #F9F9FC; /* 更淡的灰色，用于编辑状态 */
   --system-background: #FFFFFF;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   --animation-duration: 0.3s;
@@ -32,10 +47,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  overflow-y: auto;
+  /* 隐藏滚动条但保持滚动功能 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 #app {
   width: 100%;
+  max-width: 100vw;
   height: 100vh;
   padding: 0;
   display: flex;
@@ -43,6 +63,7 @@ body {
   justify-content: flex-start;
   align-items: center;
   overflow-y: auto;
+  overflow-x: hidden;
   scroll-behavior: smooth;
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
@@ -85,11 +106,13 @@ body {
 
 /* 预览卡片 */
 .preview-card {
-  width: 100%;
+  width: calc(100% - 40px);
   max-width: 600px;
   margin: 20px;
   min-height: fit-content;
   padding: 16px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* 错误卡片 */
@@ -148,18 +171,77 @@ body {
   }
 }
 
+/* 消息提示样式 */
+.message-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  z-index: 10000;
+  opacity: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
+  max-width: 280px;
+  word-wrap: break-word;
+  text-align: center;
+  
+  &.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  
+  &.message-success {
+    background-color: rgba(34, 197, 94, 0.08);
+    color: #059669;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    backdrop-filter: blur(8px);
+  }
+  
+  &.message-error {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+  
+  &.message-info {
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .message-text {
+    display: block;
+  }
+}
+
 /* 响应式设计 - 简化选择器层级 */
 @media (max-width: 768px) {
+  html, body, #app {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+  
   #app {
     padding: 12px;
   }
   
   .status-card, .loading-card, .error-card {
     padding: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .preview-card {
     padding: 12px;
+    width: calc(100% - 24px);
+    margin: 12px;
+    overflow-x: hidden;
   }
   
   .field-value {
@@ -170,14 +252,28 @@ body {
   .field-name {
     font-size: 14px;
   }
+  
+  .message-toast {
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    max-width: 90%;
+    
+    &.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  }
 }
 
 /* 字段容器 */
 .fields-container {
   max-height: calc(100vh - 40px);
   overflow-y: auto;
+  overflow-x: hidden;
   scroll-behavior: smooth;
-  padding-right: 8px;
+  padding-right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
@@ -196,11 +292,14 @@ body {
   animation: fadeIn 0.3s ease forwards;
   animation-delay: calc(var(--index, 0) * 0.05s);
   opacity: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
   
   &:hover {
-    transform: translateY(-1px);
-    
-    .copy-btn {
+    .copy-btn,
+    .edit-btn {
       opacity: 1;
       visibility: visible;
     }
@@ -214,6 +313,54 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
+  .field-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+  }
+  
+  .field-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    min-width: 60px;
+    justify-content: flex-end;
+  }
+  
+  .edit-btn,
+  .copy-btn {
+    background: var(--system-gray6);
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--system-gray);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    
+    &:hover {
+      background: var(--system-gray5);
+      color: var(--system-blue);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+    
+    .edit-icon,
+    .copy-icon {
+      width: 14px;
+      height: 14px;
+    }
+  }
 }
 
 /* 字段名称 - 简化选择器层级 */
@@ -224,31 +371,7 @@ body {
 }
 
 /* 复制按钮 - 简化选择器层级 */
-.copy-btn {
-  background: var(--system-gray6);
-  border: none;
-  padding: 6px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--system-gray);
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  visibility: hidden;
-  width: 26px;
-  height: 26px;
-  
-  &:hover {
-    background: var(--system-gray5);
-    color: var(--system-blue);
-  }
-  
-  &:active {
-    transform: scale(0.95);
-  }
-}
+
 
 .copy-icon {
   width: 14px;
@@ -257,21 +380,298 @@ body {
 }
 
 /* 字段值 - 简化选择器层级 */
+.field-value-container {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
 .field-value {
-  padding: 12px 14px;
-  border-radius: 10px;
-  background-color: var(--system-gray6);
-  font-size: 14px;
-  line-height: 1.5;
-  transition: background-color 0.2s ease;
-  word-wrap: break-word;
-  word-break: break-all;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background-color: var(--system-gray6);
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+    transition: none; // 移除过渡效果，避免视觉跳动
+    word-break: break-word !important;
+    word-wrap: break-word !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important; // 禁用连字符
+    unicode-bidi: isolate !important; // 确保Unicode字符正确显示
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
   
   &.empty {
     color: var(--system-gray);
     font-style: italic;
+  }
+  
+  &.editable {
+      cursor: pointer;
+      transition: none; // 移除过渡效果，避免视觉跳动
+      
+      &:hover {
+        // 移除hover效果，保持与编辑模式一致
+      }
+    }
+}
+
+.field-edit {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  
+  .markdown-editor {
+     width: 100%;
+     border: 1px solid rgba(0, 0, 0, 0.15);
+     border-radius: 10px;
+     font-family: inherit;
+     font-size: 14px;
+     line-height: 1.5;
+     padding: 11px 13px; // 减少1px内边距以补偿边框宽度
+     resize: none; // 禁用手动调整大小，使用自动调整
+     background-color: var(--system-gray6-lighter); // 使用更淡的背景色
+     box-sizing: border-box;
+     
+     &:focus {
+       outline: none;
+       border-color: rgba(0, 76, 255, 0.714);
+       // 移除聚焦时的背景色变化，保持与预览框一致
+     }
+   }
+  
+  // SimpleMDE编辑器样式覆盖
+   .CodeMirror {
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+      font-size: 14px;
+      min-height: auto; // 移除固定最小高度，使用内容自适应
+      height: auto;
+      padding: 0; // 移除CodeMirror容器的padding，由内部元素控制
+      box-sizing: border-box;
+      background-color: var(--system-gray6-lighter); // 使用更淡的背景色
+      line-height: 1.5; // 确保与预览框一致
+      word-wrap: normal !important;
+      word-break: normal !important; // 使用normal确保只在单词间换行
+      white-space: pre-wrap !important;
+      overflow-wrap: normal !important;
+      hyphens: none !important; // 禁用连字符
+      unicode-bidi: isolate !important; // 确保Unicode字符正确显示
+      overflow-x: hidden !important; // 隐藏水平滚动条
+      margin-bottom: 0 !important; // 移除底部外边距
+      
+      &.CodeMirror-focused {
+        // 添加聚焦时的边框颜色变化
+        border-color: rgba(0, 81, 255, 0.568);
+      }
+      
+      .CodeMirror-scroll {
+        min-height: auto; // 移除固定最小高度，使用内容自适应
+        padding: 11px 13px; // 减少1px内边距以补偿边框宽度
+        margin-bottom: 0 !important; // 移除底部边距
+        box-sizing: border-box;
+        overflow-y: hidden !important; // 禁用垂直滚动条，使编辑器高度完全适应内容
+        overflow-x: hidden !important; // 禁用水平滚动条
+      }
+      
+      .CodeMirror-lines {
+        padding: 0; // 保持为0，padding由CodeMirror-scroll控制
+        word-wrap: normal !important;
+        word-break: normal !important; // 使用normal确保只在单词间换行
+        white-space: pre-wrap !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important; // 禁用连字符
+        unicode-bidi: isolate !important; // 确保Unicode字符正确显示
+      }
+      
+      .CodeMirror pre {
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+        line-height: 1.5 !important;
+        word-wrap: normal !important;
+        word-break: normal !important; // 使用normal确保只在单词间换行
+        white-space: pre-wrap !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important; // 禁用连字符
+        unicode-bidi: isolate !important; // 确保Unicode字符正确显示
+      }
+      
+      // 修复文本在编辑模式下向右移动的问题
+      .CodeMirror-code {
+        margin-left: 0;
+      }
+      
+      // 确保光标位置与文本位置一致
+      .CodeMirror-cursor {
+        margin-left: 0;
+      }
+      
+      // 修复CodeMirror内部元素的边距问题
+      .CodeMirror-sizer {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        margin-bottom: 0 !important; // 移除底部边距
+        padding-bottom: 0 !important; // 移除底部内边距
+      }
+      
+      // 修复行号区域可能导致的文本偏移
+      .CodeMirror-gutters {
+        display: none !important;
+      }
+      
+      // 确保文本对齐方式一致
+      .CodeMirror-line {
+        padding-left: 0 !important;
+        text-indent: 0 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+        padding-bottom: 0 !important; // 移除底部内边距
+        margin-bottom: 0 !important; // 移除底部外边距
+        word-wrap: normal !important;
+        word-break: normal !important; // 使用normal确保只在单词间换行
+        white-space: pre-wrap !important;
+        overflow-wrap: normal !important;
+        hyphens: none !important; // 禁用连字符
+        unicode-bidi: isolate !important; // 确保Unicode字符正确显示
+        line-height: 1.5 !important; // 确保行高与预览框一致
+      }
+      
+      // 禁用Markdown语法高亮，使所有文本样式一致
+      .cm-header, .cm-header-1, .cm-header-2, .cm-header-3, .cm-header-4, .cm-header-5, .cm-header-6,
+      .cm-strong, .cm-em, .cm-link, .cm-url, .cm-quote, .cm-variable-2, .cm-variable-3,
+      .cm-keyword, .cm-builtin, .cm-tag, .cm-attribute, .cm-hr, .cm-comment, .cm-string,
+      .cm-formatting, .cm-formatting-header, .cm-formatting-quote, .cm-formatting-list,
+      .cm-formatting-link, .cm-formatting-strong, .cm-formatting-em, .cm-formatting-code,
+      .cm-formatting-task {
+        color: inherit !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        font-style: inherit !important;
+        font-family: inherit !important;
+        line-height: inherit !important;
+        text-decoration: inherit !important;
+      }
+      
+      // 自定义类，用于完全禁用Markdown语法高亮
+      &.no-markdown-highlighting {
+        .CodeMirror-line * {
+          color: inherit !important;
+          font-size: inherit !important;
+          font-weight: inherit !important;
+          font-style: inherit !important;
+          font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+          line-height: inherit !important;
+          text-decoration: inherit !important;
+          background-color: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
+      }
+    }
+  
+  .editor-toolbar {
+     display: none !important;
+   }
+  
+  .editor-preview {
+    background-color: var(--system-gray6);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
+    word-break: normal !important;
+    word-wrap: normal !important;
+    white-space: pre-wrap !important;
+     overflow-wrap: normal !important;
+     hyphens: none !important;
+      unicode-bidi: isolate !important;
+    }
+  
+   .edit-input {
+     width: 100%;
+     min-height: 1.5em;
+     max-height: 200px;
+     padding: 12px 14px;
+     border: 1px solid transparent;
+     border-radius: 8px;
+     font-family: inherit;
+     font-size: 14px;
+     line-height: 1.5;
+     color: var(--text-primary);
+     background-color: var(--bg-primary);
+     word-break: normal; // 修改为normal，与其他编辑器元素保持一致
+     word-wrap: break-word;
+     white-space: pre-wrap;
+     overflow-wrap: break-word;
+     line-break: auto; // 添加自动换行设置
+     text-wrap: wrap; // 添加文本换行设置
+     hyphens: none; // 禁用连字符
+     overflow-y: auto;
+     transition: all 0.2s ease;
+     
+     &:focus {
+       outline: none;
+       border-color: var(--primary-color);
+       box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+       background-color: var(--bg-secondary);
+     }
+     
+     &:empty::before {
+       content: attr(data-placeholder);
+       color: var(--text-secondary);
+       font-style: italic;
+     }
+   }
+  
+  .edit-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+  
+  .save-btn,
+  .cancel-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  .save-btn {
+    background-color: var(--primary-color);
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background-color: var(--primary-color-hover);
+    }
+  }
+  
+  .cancel-btn {
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
+    
+    &:hover {
+      background-color: var(--border-color);
+      color: var(--text-primary);
+    }
   }
 }
 

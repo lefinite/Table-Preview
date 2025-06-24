@@ -26,6 +26,14 @@ export default {
   copySuccess: '已复制！',
   copyFailed: '复制失败',
   
+  // 编辑功能
+  editContent: '编辑内容',
+  saveContent: '保存',
+  cancelEdit: '取消',
+  saveSuccess: '保存成功！',
+  saveFailed: '保存失败',
+  editPlaceholder: '请输入内容...',
+  
   // 字段类型标签
   fieldTypes: {
     text: '文本',
