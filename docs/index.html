@@ -983,17 +983,11 @@
             }
         }, 400);
         
-        // 标题霓虹光效脉动
-        setInterval(() => {
-            const title = document.querySelector('.hero-title');
-            if (title) {
-                title.style.textShadow = `
-                    0 0 20px rgba(106, 53, 255, ${0.8 + Math.random() * 0.4}),
-                    0 0 40px rgba(0, 245, 228, ${0.6 + Math.random() * 0.4}),
-                    0 0 60px rgba(202, 75, 253, ${0.4 + Math.random() * 0.3})
-                `;
-            }
-        });
+        // 移除标题霓虹光效脉动效果
+        const title = document.querySelector('.hero-title');
+        if (title) {
+            title.style.textShadow = 'none';
+        }
         
         // 图片点击放大功能
         document.addEventListener('DOMContentLoaded', () => {
