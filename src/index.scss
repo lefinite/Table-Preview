@@ -34,7 +34,7 @@ html, body {
   --system-gray6-lighter: #F9F9FC; /* 更淡的灰色，用于编辑状态 */
   --system-background: #FFFFFF;
   --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --animation-duration: 0.3s;
+  --animation-duration: 0.15s;
 }
 
 /* 修改 body 样式 */
@@ -115,7 +115,7 @@ body {
    display: flex;
    align-items: center;
    justify-content: center;
-   animation: fadeIn 0.3s ease;
+   animation: fadeIn 0.2s ease;
    
    .image-modal-backdrop {
      position: absolute;
@@ -135,7 +135,7 @@ body {
      border-radius: 12px;
      overflow: hidden;
      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-     animation: scaleIn 0.3s ease;
+     animation: scaleIn 0.2s ease;
    }
    
    .image-modal-close {
@@ -186,9 +186,14 @@ body {
  }
  
  @keyframes scaleIn {
-   from { transform: scale(0.9); opacity: 0; }
-   to { transform: scale(1); opacity: 1; }
- }
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* 预览卡片 */
 .preview-card {
@@ -245,7 +250,7 @@ body {
       border: 2px solid var(--system-gray5);
       border-top: 2px solid var(--system-blue);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.6s linear infinite;
       margin: 0 auto 16px;
     }
     
@@ -375,8 +380,8 @@ body {
   margin-bottom: 16px;
   position: relative;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  animation: fadeIn 0.3s ease forwards;
-  animation-delay: calc(var(--index, 0) * 0.05s);
+  animation: fadeIn 0.2s ease forwards;
+  animation-delay: calc(var(--index, 0) * 0.03s);
   opacity: 0;
   width: 100%;
   max-width: 100%;
@@ -773,14 +778,14 @@ body {
 }
 
 .field-item {
-  animation: fadeIn 0.3s ease forwards;
-  animation-delay: calc(var(--index, 0) * 0.05s);
+  animation: fadeIn 0.2s ease forwards;
+  animation-delay: calc(var(--index, 0) * 0.03s);
   opacity: 0;
 }
 
 /* 为不同的卡片添加过渡效果 */
 .status-card, .loading-card, .error-card, .preview-card {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* 附件样式 */
@@ -857,12 +862,11 @@ body {
 
 /* 查找引用字段的样式 */
 .lookup-item {
-  padding: 2px 0;
+  padding: 0;
   line-height: 1.5;
   color: inherit;
-  margin-bottom: 2px;
   
-  &:last-child {
+  &:not(:last-child) {
     margin-bottom: 0;
   }
 }

@@ -1405,10 +1405,18 @@ class TableRowPreview {
       // 创建新的监听器
       this.selectionChangeHandler = async (event) => {
         if (event.data?.tableId && event.data?.recordId) {
-          this.currentTableId = event.data.tableId;
-          this.currentRecordId = event.data.recordId;
+          const newTableId = event.data.tableId;
+          const newRecordId = event.data.recordId;
           this.showLoading();
-          await this.loadRowData(event.data.tableId, event.data.recordId);
+          try {
+            await this.loadRowData(newTableId, newRecordId);
+            // 只有在成功加载数据后才更新当前状态
+            this.currentTableId = newTableId;
+            this.currentRecordId = newRecordId;
+          } catch (error) {
+            console.error('Selection change failed:', error);
+            // 加载失败时保持原有状态，错误信息已在loadRowData中处理
+          }
         } else {
           this.currentTableId = null;
           this.currentRecordId = null;
