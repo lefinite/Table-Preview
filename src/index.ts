@@ -115,14 +115,15 @@ class TableRowPreview {
       
       case FieldType.MultiSelect:
         if (Array.isArray(value)) {
-          return value.map(item => {
+          const options = value.map(item => {
             if (typeof item === 'object' && item.text) {
               return `<span class="option-item">${this.escapeHtml(item.text)}</span>`;
             } else if (typeof item === 'object') {
               return `<span class="option-item">${this.escapeHtml(JSON.stringify(item))}</span>`;
             }
             return `<span class="option-item">${this.escapeHtml(String(item))}</span>`;
-          }).join(' ');
+          }).join('');
+          return `<div class="option-container">${options}</div>`;
         } else if (typeof value === 'object') {
           return `<pre class="json-value">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
         }
@@ -319,11 +320,37 @@ class TableRowPreview {
     return imageExtensions.includes(extension);
   }
 
-  // 判断是否为附件字段
-  private isImageAttachmentField(fieldType: any, value: any): boolean {
-    // 对所有附件字段返回true，不显示复制按钮
-    return fieldType === FieldType.Attachment;
+  // 判断是否为文本类型字段（可复制的字段）
+  private isTextTypeField(fieldType: FieldType): boolean {
+    // 定义可复制的文本类型字段
+    return [
+      FieldType.Text,
+      FieldType.Barcode,
+      FieldType.Email,
+      FieldType.Phone,
+      FieldType.Url,
+      FieldType.Number,
+      FieldType.Currency,
+      FieldType.Rating,
+      FieldType.Progress,
+      FieldType.SingleSelect,
+      FieldType.MultiSelect,
+      FieldType.DateTime,
+      FieldType.CreatedTime,
+      FieldType.ModifiedTime,
+      FieldType.Checkbox,
+      FieldType.User,
+      FieldType.CreatedUser,
+      FieldType.ModifiedUser,
+      FieldType.Formula,
+      FieldType.Lookup,
+      FieldType.AutoNumber,
+      FieldType.Location,
+      FieldType.GroupChat
+    ].includes(fieldType);
   }
+
+
 
   // 显示图片模态框
   private showImageModal(imgSrc: string, imgAlt: string): void {
@@ -907,7 +934,7 @@ class TableRowPreview {
       
       // 更新复制按钮
       const copyBtn = fieldItem.find('.copy-btn');
-      if (isEmpty) {
+      if (isEmpty || !this.isTextTypeField(fieldMeta.type)) {
         copyBtn.hide();
       } else {
         copyBtn.show().attr('data-value', newValue);
@@ -1482,7 +1509,7 @@ class TableRowPreview {
         <div class="field-header">
           <span class="field-name">${fieldMeta.name}</span>
           <div class="field-actions">
-            ${!isEmpty && !this.isImageAttachmentField(fieldMeta.type, rawValue) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${this.escapeHtml(rawValue)}">
+            ${!isEmpty && this.isTextTypeField(fieldMeta.type) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${this.escapeHtml(rawValue)}">
               <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V18M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7C16 8.10457 15.1046 9 14 9H10C8.89543 9 8 8.10457 8 7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
