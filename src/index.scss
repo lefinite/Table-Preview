@@ -48,6 +48,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
   overflow-y: auto;
+  
+  /* 滚动优化 */
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
+  
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
@@ -64,7 +69,18 @@ body {
   align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  /* 移除smooth滚动以提升性能 */
+  scroll-behavior: auto;
+  
+  /* 性能优化 */
+  will-change: scroll-position;
+  transform: translateZ(0); /* 启用硬件加速 */
+  /* 移除-webkit-overflow-scrolling以避免边界停顿 */
+  backface-visibility: hidden;
+  /* 添加滚动边界优化 */
+  overscroll-behavior: contain;
+  scroll-snap-stop: normal;
+  
   /* 隐藏滚动条但保持滚动功能 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
@@ -199,7 +215,7 @@ body {
 .preview-card {
   width: calc(100% - 40px);
   max-width: 600px;
-  margin: 20px;
+  margin: 8px 20px 20px 20px;
   min-height: fit-content;
   padding: 16px;
   box-sizing: border-box;
@@ -357,36 +373,37 @@ body {
 
 /* 字段容器 */
 .fields-container {
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
+  /* 移除独立滚动，让整个页面统一滚动 */
+  max-height: none;
+  overflow: visible;
   padding-right: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   
-  /* 隐藏滚动条但保持滚动功能 */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-  
-  &::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-  }
+  /* 性能优化 */
+  transform: translateZ(0); /* 启用硬件加速 */
+  contain: layout style; /* CSS 包含优化 */
+  backface-visibility: hidden;
 }
 
 /* 字段项 - 简化选择器层级 */
 .field-item {
   margin-bottom: 16px;
   position: relative;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  /* 移除过渡效果以提升滚动性能 */
   animation: fadeIn 0.2s ease forwards;
-  animation-delay: calc(var(--index, 0) * 0.03s);
+  animation-delay: calc(var(--index, 0) * 0.02s); /* 减少延迟 */
   opacity: 0;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  
+  /* 性能优化 */
+  will-change: auto; /* 只在需要时启用 */
+  transform: translateZ(0); /* 启用硬件加速 */
+  contain: layout style; /* 减少重绘范围 */
   
   &:hover {
     .copy-btn,
@@ -419,15 +436,15 @@ body {
     justify-content: flex-end;
   }
   
-  .edit-btn,
-  .copy-btn {
+  .edit-btn, .copy-btn {
     background: var(--system-gray6);
     border: none;
     padding: 6px;
     border-radius: 6px;
     cursor: pointer;
     color: var(--system-gray);
-    transition: all 0.2s ease;
+    /* 简化过渡效果 */
+    transition: background-color 0.1s ease, color 0.1s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -442,8 +459,9 @@ body {
       color: var(--system-blue);
     }
     
+    /* 移除scale动画以提升性能 */
     &:active {
-      transform: scale(0.95);
+      background: var(--system-gray2);
     }
     
     .edit-icon,
@@ -771,17 +789,7 @@ body {
   font-style: italic;
 }
 
-/* 添加到文件末尾 */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.field-item {
-  animation: fadeIn 0.2s ease forwards;
-  animation-delay: calc(var(--index, 0) * 0.03s);
-  opacity: 0;
-}
+/* 重复的动画定义已删除，使用统一的fadeIn动画 */
 
 /* 为不同的卡片添加过渡效果 */
 .status-card, .loading-card, .error-card, .preview-card {
