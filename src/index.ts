@@ -135,7 +135,7 @@ class TableRowPreview {
         if (typeof value === 'object') {
           return `<pre class="json-value">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
         }
-        return value ? new Date(value).toLocaleString('zh-CN') : '';
+        return value ? new Date(value).toLocaleDateString('zh-CN') : '';
       
       case FieldType.Checkbox:
         if (typeof value === 'object') {
@@ -271,7 +271,7 @@ class TableRowPreview {
       case FieldType.DateTime:
       case FieldType.CreatedTime:
       case FieldType.ModifiedTime:
-        return value ? new Date(value).toLocaleString('zh-CN') : '';
+        return value ? new Date(value).toLocaleDateString('zh-CN') : '';
       
       case FieldType.Checkbox:
         return value ? '是' : '否';
