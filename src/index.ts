@@ -428,6 +428,35 @@ class TableRowPreview {
     ].includes(fieldType);
   }
 
+  // 检测文本是否包含Markdown语法
+  private containsMarkdown(text: string): boolean {
+    if (!text || typeof text !== 'string') {
+      return false;
+    }
+
+    // Markdown语法检测规则
+    const markdownPatterns = [
+      /^#{1,6}\s+/m,                    // 标题 # ## ### 等
+      /\*\*.*?\*\*/,                    // 粗体 **text**
+      /\*.*?\*/,                       // 斜体 *text*
+      /__.*?__/,                       // 粗体 __text__
+      /_.*?_/,                         // 斜体 _text_
+      /~~.*?~~/,                       // 删除线 ~~text~~
+      /`.*?`/,                         // 行内代码 `code`
+      /```[\s\S]*?```/,                // 代码块 ```code```
+      /^\s*[-*+]\s+/m,                 // 无序列表 - * +
+      /^\s*\d+\.\s+/m,                 // 有序列表 1. 2.
+      /^\s*>\s+/m,                     // 引用 >
+      /\[.*?\]\(.*?\)/,                // 链接 [text](url)
+      /!\[.*?\]\(.*?\)/,               // 图片 ![alt](url)
+      /^\s*\|.*\|\s*$/m,               // 表格 |col1|col2|
+      /^\s*[-=]{3,}\s*$/m,             // 分隔线 --- ===
+      /^\s*\*{3,}\s*$/m,               // 分隔线 ***
+    ];
+
+    return markdownPatterns.some(pattern => pattern.test(text));
+  }
+
 
 
   // 显示图片模态框
@@ -462,6 +491,108 @@ class TableRowPreview {
         $(document).off('keydown.imageModal');
       }
     });
+  }
+
+  // 显示Markdown预览模态框
+  private showMarkdownPreview(markdownText: string): void {
+    // 移除已存在的预览模态框
+    $('.markdown-preview-modal').remove();
+    
+    // 渲染Markdown为HTML
+    const renderedHtml = this.renderMarkdown(markdownText);
+    
+    // 创建模态框HTML
+    const modalHtml = `
+      <div class="markdown-preview-modal">
+        <div class="markdown-preview-backdrop"></div>
+        <div class="markdown-preview-content">
+          <div class="markdown-preview-header">
+            <h3>Markdown 预览</h3>
+            <button class="markdown-preview-close">&times;</button>
+          </div>
+          <div class="markdown-preview-body">
+            ${renderedHtml}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // 添加到页面
+    $('body').append(modalHtml);
+    
+    // 绑定关闭事件
+    $('.markdown-preview-close, .markdown-preview-backdrop').on('click', () => {
+      $('.markdown-preview-modal').remove();
+    });
+    
+    // ESC键关闭
+    $(document).on('keydown.markdownPreview', (e) => {
+      if (e.key === 'Escape') {
+        $('.markdown-preview-modal').remove();
+        $(document).off('keydown.markdownPreview');
+      }
+    });
+  }
+
+  // 渲染Markdown为HTML
+  private renderMarkdown(markdownText: string): string {
+    if (!markdownText) {
+      return '<p>无内容</p>';
+    }
+
+    // 简单的Markdown渲染器
+    let html = this.escapeHtml(markdownText);
+
+    // 标题
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+    // 粗体和斜体
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+    // 删除线
+    html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
+
+    // 行内代码
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 代码块
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+
+    // 链接
+    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+
+    // 图片
+    html = html.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;" />');
+
+    // 无序列表
+    html = html.replace(/^\s*[-*+]\s+(.*)$/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+
+    // 有序列表
+    html = html.replace(/^\s*\d+\.\s+(.*)$/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
+
+    // 引用
+    html = html.replace(/^\s*>\s+(.*)$/gim, '<blockquote>$1</blockquote>');
+
+    // 分隔线
+    html = html.replace(/^\s*[-=*]{3,}\s*$/gim, '<hr>');
+
+    // 段落（处理换行）
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+    html = '<p>' + html + '</p>';
+
+    // 清理空段落
+    html = html.replace(/<p><\/p>/g, '');
+    html = html.replace(/<p>\s*<\/p>/g, '');
+
+    return html;
   }
 
   // 键盘事件和失焦事件处理已移至事件委托中
@@ -1428,6 +1559,10 @@ class TableRowPreview {
             const value = target.data('value');
             this.copyToClipboard(value, target);
             break;
+          case 'preview':
+            const markdownText = target.data('value');
+            this.showMarkdownPreview(markdownText);
+            break;
         }
       });
       
@@ -1620,12 +1755,21 @@ class TableRowPreview {
     // 初始化字段值缓存
     this.currentFieldValues[fieldMeta.id] = rawValue;
     
+    // 检测是否包含Markdown语法（仅对文本类型字段进行检测）
+    const hasMarkdown = isTextType && !isEmpty && this.containsMarkdown(rawValue);
+    
     // 使用模板字符串一次性创建DOM结构，减少DOM操作
     const fieldItem = $(`
       <div class="field-item ${isEmpty ? 'empty' : ''}" style="--index: ${index}" data-field-id="${fieldMeta.id}" data-field-type="${fieldMeta.type}">
         <div class="field-header">
           <span class="field-name">${fieldMeta.name}</span>
           <div class="field-actions">
+            ${hasMarkdown ? `<button class="preview-btn" title="预览Markdown" data-action="preview" data-value="${rawValue.replace(/"/g, '&quot;')}">
+              <svg class="preview-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>` : ''}
             ${!isEmpty && this.isTextTypeField(fieldMeta.type) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${rawValue.replace(/"/g, '&quot;')}">
               <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V18M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7C16 8.10457 15.1046 9 14 9H10C8.89543 9 8 8.10457 8 7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
