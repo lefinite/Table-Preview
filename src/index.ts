@@ -135,7 +135,7 @@ class TableRowPreview {
         if (typeof value === 'object') {
           return `<pre class="json-value">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
         }
-        return value ? new Date(value).toLocaleDateString('zh-CN') : '';
+        return value ? new Date(value).toLocaleDateString('zh-CN') : `<span class="empty-value">${i18next.t('emptyValue')}</span>`;
       
       case FieldType.Checkbox:
         if (typeof value === 'object') {
