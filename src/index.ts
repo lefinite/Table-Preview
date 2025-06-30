@@ -205,8 +205,16 @@ class TableRowPreview {
         }
         return value ? `<span class="link-item">🔗 ${this.escapeHtml(String(value))}</span>` : '';
       
-      case FieldType.Formula:
       case FieldType.Lookup:
+        // 处理查找引用字段的特殊展示
+        if (Array.isArray(value)) {
+          return this.formatLookupField(value);
+        } else if (typeof value === 'object') {
+          return `<pre class="json-value">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
+        }
+        return this.escapeHtml(String(value));
+      
+      case FieldType.Formula:
       case FieldType.AutoNumber:
       case FieldType.Location:
       case FieldType.GroupChat:
@@ -291,6 +299,29 @@ class TableRowPreview {
             }
             return String(attachment);
           }).join(', ');
+        }
+        return String(value || '');
+      
+      case FieldType.Lookup:
+        // 处理查找引用字段的文本提取
+        if (Array.isArray(value)) {
+          const textContents: string[] = [];
+          for (const item of value) {
+            if (typeof item === 'object' && item.type === 'text' && item.text) {
+              // 跳过逗号分隔符
+              if (item.text.trim() === ',') {
+                continue;
+              }
+              textContents.push(item.text.trim());
+            } else if (typeof item === 'string') {
+              // 跳过逗号分隔符
+              if (item.trim() === ',') {
+                continue;
+              }
+              textContents.push(item.trim());
+            }
+          }
+          return textContents.join('\n');
         }
         return String(value || '');
       
@@ -937,7 +968,8 @@ class TableRowPreview {
       if (isEmpty || !this.isTextTypeField(fieldMeta.type)) {
         copyBtn.hide();
       } else {
-        copyBtn.show().attr('data-value', newValue);
+        const rawValue = this.getRawTextValue(fieldMeta.type, newValue);
+        copyBtn.show().attr('data-value', rawValue.replace(/"/g, '&quot;'));
       }
       
       // 退出编辑模式
@@ -1207,6 +1239,36 @@ class TableRowPreview {
         return this.escapeHtml(String(segment));
       }
     }).join('');
+  }
+
+  private formatLookupField(lookupArray: any[]): string {
+    if (!Array.isArray(lookupArray)) {
+      return this.escapeHtml(String(lookupArray));
+    }
+
+    // 提取所有文本内容
+    const textContents: string[] = [];
+    
+    for (const item of lookupArray) {
+      if (typeof item === 'object' && item.type === 'text' && item.text) {
+        // 跳过逗号分隔符
+        if (item.text.trim() === ',') {
+          continue;
+        }
+        textContents.push(item.text.trim());
+      } else if (typeof item === 'string') {
+        // 跳过逗号分隔符
+        if (item.trim() === ',') {
+          continue;
+        }
+        textContents.push(item.trim());
+      }
+    }
+
+    // 每行显示一个内容
+    return textContents.map(text => 
+      `<div class="lookup-item">${this.escapeHtml(text)}</div>`
+    ).join('');
   }
 
   private escapeHtml(text: string): string {
@@ -1509,7 +1571,7 @@ class TableRowPreview {
         <div class="field-header">
           <span class="field-name">${fieldMeta.name}</span>
           <div class="field-actions">
-            ${!isEmpty && this.isTextTypeField(fieldMeta.type) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${this.escapeHtml(rawValue)}">
+            ${!isEmpty && this.isTextTypeField(fieldMeta.type) ? `<button class="copy-btn" title="${i18next.t('copyContent')}" data-action="copy" data-value="${rawValue.replace(/"/g, '&quot;')}">
               <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 5H6C4.89543 5 4 5.89543 4 7V19C4 20.1046 4.89543 21 6 21H16C17.1046 21 18 20.1046 18 19V18M8 5C8 3.89543 8.89543 3 10 3H14C15.1046 3 16 3.89543 16 5V7C16 8.10457 15.1046 9 14 9H10C8.89543 9 8 8.10457 8 7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>

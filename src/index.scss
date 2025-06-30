@@ -854,3 +854,21 @@ body {
     box-shadow: 0 2px 4px rgba(0, 122, 255, 0.3);
   }
 }
+
+/* 查找引用字段的样式 */
+.lookup-item {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  line-height: 1.4;
+  color: #333;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background-color: #f8f9fa;
+    padding-left: 8px;
+    transition: all 0.2s ease;
+  }
+}
