@@ -215,6 +215,27 @@ class TableRowPreview {
         return this.escapeHtml(String(value));
       
       case FieldType.Formula:
+        // 公式字段特殊处理：优先使用 text 或 display_value 属性
+        if (typeof value === 'object' && value !== null) {
+          // 尝试获取显示值
+          if (value.text !== undefined) {
+            return this.escapeHtml(String(value.text));
+          }
+          if (value.display_value !== undefined) {
+            return this.escapeHtml(String(value.display_value));
+          }
+          if (value.displayValue !== undefined) {
+            return this.escapeHtml(String(value.displayValue));
+          }
+          // 如果没有找到显示值属性，尝试直接使用value属性
+          if (value.value !== undefined) {
+            return this.escapeHtml(String(value.value));
+          }
+          // 最后降级到JSON显示
+          return `<pre class="json-value">${this.escapeHtml(JSON.stringify(value, null, 2))}</pre>`;
+        }
+        return this.escapeHtml(String(value));
+      
       case FieldType.AutoNumber:
       case FieldType.Location:
       case FieldType.GroupChat:
@@ -324,6 +345,32 @@ class TableRowPreview {
           return textContents.join('\n');
         }
         return String(value || '');
+      
+      case FieldType.Formula:
+        // 公式字段特殊处理：优先使用 text 或 display_value 属性
+        if (typeof value === 'object' && value !== null) {
+          // 尝试获取显示值
+          if (value.text !== undefined) {
+            return String(value.text);
+          }
+          if (value.display_value !== undefined) {
+            return String(value.display_value);
+          }
+          if (value.displayValue !== undefined) {
+            return String(value.displayValue);
+          }
+          // 如果没有找到显示值属性，尝试直接使用value属性
+          if (value.value !== undefined) {
+            return String(value.value);
+          }
+          // 最后降级到JSON显示
+          try {
+            return JSON.stringify(value);
+          } catch {
+            return '[Circular Object]';
+          }
+        }
+        return String(value);
       
       default:
         if (typeof value === 'object' && value !== null) {
