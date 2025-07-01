@@ -1794,11 +1794,11 @@ class TableRowPreview {
         }
         
         switch (e.key) {
-          case 'ArrowLeft':
+          case 'ArrowUp':
             e.preventDefault();
             this.navigateToPreviousRow();
             break;
-          case 'ArrowRight':
+          case 'ArrowDown':
             e.preventDefault();
             this.navigateToNextRow();
             break;
