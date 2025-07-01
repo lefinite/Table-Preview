@@ -534,6 +534,15 @@ class TableRowPreview {
       $('.markdown-preview-modal').remove();
     });
     
+    // 绑定预览框内图片点击事件
+    $('.markdown-preview-body img').on('click', (e) => {
+      const imgSrc = $(e.target).attr('src') || '';
+      const imgAlt = $(e.target).attr('alt') || '';
+      if (imgSrc) {
+        this.showImageModal(imgSrc, imgAlt);
+      }
+    });
+    
     // ESC键关闭
     $(document).on('keydown.markdownPreview', (e) => {
       if (e.key === 'Escape') {
@@ -612,7 +621,7 @@ class TableRowPreview {
     html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     
     // 处理图片
-    html = html.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />');
+    html = html.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" class="markdown-image" style="cursor: pointer;" />');
     
     // 恢复代码块
     html = html.replace(/%%CODEBLOCK_(\d+)%%/g, (match, id) => {
@@ -1342,13 +1351,40 @@ class TableRowPreview {
       fieldValue.html(isEmpty ? `<span class="empty-value">${i18next.t('noData')}</span>` : formattedValue);
       fieldItem.toggleClass('empty', isEmpty);
       
-      // 更新复制按钮
+      // 更新复制按钮和预览按钮
       const copyBtn = fieldItem.find('.copy-btn');
+      const previewBtn = fieldItem.find('.preview-btn');
+      const fieldActions = fieldItem.find('.field-actions');
+      
       if (isEmpty || !this.isTextTypeField(fieldMeta.type)) {
         copyBtn.hide();
+        previewBtn.remove();
       } else {
         const rawValue = this.getRawTextValue(fieldMeta.type, newValue);
-        copyBtn.show().attr('data-value', rawValue.replace(/"/g, '&quot;'));
+        const escapedValue = rawValue.replace(/"/g, '&quot;');
+        const hasMarkdown = this.containsMarkdown(rawValue);
+        
+        copyBtn.show().attr('data-value', escapedValue);
+        
+        // 处理预览按钮
+        if (hasMarkdown) {
+          if (previewBtn.length > 0) {
+            // 更新现有预览按钮的data-value属性
+            previewBtn.attr('data-value', escapedValue);
+          } else {
+            // 创建新的预览按钮
+            const previewBtnHtml = `<button class="preview-btn" title="预览Markdown" data-action="preview" data-value="${escapedValue}">
+              <svg class="preview-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>`;
+            fieldActions.prepend(previewBtnHtml);
+          }
+        } else {
+          // 移除预览按钮（如果内容不再包含Markdown语法）
+          previewBtn.remove();
+        }
       }
       
       // 退出编辑模式
@@ -1753,6 +1789,8 @@ class TableRowPreview {
         
         const target = $(e.currentTarget);
         const action = target.data('action');
+        const fieldItem = target.closest('.field-item');
+        const fieldId = fieldItem.data('field-id');
         
         // 根据不同的操作执行相应的处理
         switch (action) {
@@ -1761,9 +1799,24 @@ class TableRowPreview {
             this.copyToClipboard(value, target);
             break;
           case 'preview':
-            const markdownText = target.data('value');
-            const fieldItem = target.closest('.field-item');
-            const fieldId = fieldItem.data('field-id');
+            // 检查是否在编辑模式下
+            const fieldEdit = fieldItem.find('.field-edit');
+            let markdownText;
+            
+            if (fieldEdit.is(':visible')) {
+              // 如果在编辑模式下，从编辑器获取最新内容
+              const textarea = fieldItem.find('.markdown-editor')[0] as HTMLTextAreaElement;
+              if (textarea && (textarea as any).simplemde) {
+                markdownText = (textarea as any).simplemde.value();
+              } else {
+                // 如果编辑器未初始化，从缓存获取最新值
+                markdownText = this.currentFieldValues[fieldId] || '';
+              }
+            } else {
+              // 如果不在编辑模式下，从缓存获取最新值
+              markdownText = this.currentFieldValues[fieldId] || '';
+            }
+            
             this.showMarkdownPreview(markdownText, fieldId);
             break;
         }

@@ -389,7 +389,7 @@ body {
 
 /* 字段项 - 简化选择器层级 */
 .field-item {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   position: relative;
   /* 移除过渡效果以提升滚动性能 */
   animation: fadeIn 0.2s ease forwards;
@@ -418,7 +418,7 @@ body {
 /* 字段头部 - 简化选择器层级 */
 .field-header {
   position: relative;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -500,8 +500,8 @@ body {
 }
 
 .field-value {
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 12px 14px;
+    border-radius: 10px;
     background-color: var(--system-gray6);
     font-size: 14px;
     line-height: 1.5;
@@ -1126,6 +1126,12 @@ body {
     margin: 1.5em auto;
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    
+    &.markdown-image:hover {
+      transform: scale(1.02);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
   }
   
   hr {
