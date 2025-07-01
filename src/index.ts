@@ -27,6 +27,7 @@ class TableRowPreview {
   private currentFieldValues: { [fieldId: string]: string } = {};
   private selectionChangeHandler: ((event: any) => Promise<void>) | null = null;
   private isInitialized: boolean = false;
+  private lastPreviewedFieldId: string | null = null; // 记录上次预览的字段ID
 
   private constructor() {
     this.init();
@@ -494,9 +495,17 @@ class TableRowPreview {
   }
 
   // 显示Markdown预览模态框
-  private showMarkdownPreview(markdownText: string): void {
+  private showMarkdownPreview(markdownText: string, fieldId?: string): void {
     // 移除已存在的预览模态框
     $('.markdown-preview-modal').remove();
+    
+    // 如果提供了字段ID，则记录为上次预览的字段ID
+    if (fieldId) {
+      this.lastPreviewedFieldId = fieldId;
+    }
+    
+    // 检查是否包含Markdown语法
+    const isMarkdown = this.containsMarkdown(markdownText);
     
     // 渲染Markdown为HTML
     const renderedHtml = this.renderMarkdown(markdownText);
@@ -507,8 +516,8 @@ class TableRowPreview {
         <div class="markdown-preview-backdrop"></div>
         <div class="markdown-preview-content">
           <div class="markdown-preview-header">
-            <h3>Markdown 预览</h3>
-            <button class="markdown-preview-close">&times;</button>
+            <h3>${isMarkdown ? 'Markdown 预览' : '文本预览'}</h3>
+            <button class="markdown-preview-close"></button>
           </div>
           <div class="markdown-preview-body">
             ${renderedHtml}
@@ -537,62 +546,254 @@ class TableRowPreview {
   // 渲染Markdown为HTML
   private renderMarkdown(markdownText: string): string {
     if (!markdownText) {
-      return '<p>无内容</p>';
+      return '<p class="empty-content">无内容</p>';
+    }
+    
+    // 检查是否包含Markdown语法
+    const isMarkdown = this.containsMarkdown(markdownText);
+    
+    // 如果不是Markdown内容，则简单处理换行并返回
+    if (!isMarkdown) {
+      // 转义HTML特殊字符并处理换行
+      const plainText = this.escapeHtml(markdownText);
+      return `<div class="plain-text">${plainText.replace(/\n/g, '<br>')}</div>`;
     }
 
-    // 简单的Markdown渲染器
+    // 转义HTML特殊字符
     let html = this.escapeHtml(markdownText);
+    
+    // 保存代码块，以防止其中的内容被其他规则处理
+    const codeBlocks: string[] = [];
+    html = html.replace(/```([^\n]*)\n([\s\S]*?)```/g, (match, language, code) => {
+      const id = codeBlocks.length;
+      const languageClass = language ? ` class="language-${language.trim()}"` : '';
+      codeBlocks.push(`<pre><code${languageClass}>${this.escapeHtml(code.trim())}</code></pre>`);
+      return `%%CODEBLOCK_${id}%%`;
+    });
 
-    // 标题
-    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    // 处理表格
+    html = this.processMarkdownTables(html);
+    
+    // 处理标题 (h1 - h6)
+    html = html.replace(/^(#{1,6})\s+(.+)$/gm, (match, hashes, content) => {
+      const level = hashes.length;
+      return `<h${level}>${content.trim()}</h${level}>`;
+    });
 
-    // 粗体和斜体
+    // 处理任务列表
+    html = html.replace(/^\s*[-*+]\s+\[([ x])\]\s+(.+)$/gm, (match, checked, content) => {
+      const checkedClass = checked === 'x' ? ' class="checked"' : '';
+      return `<li${checkedClass}>${content.trim()}</li>`;
+    });
+    
+    // 处理无序列表
+    html = this.processMarkdownLists(html, /^\s*[-*+]\s+(?!\[[ x]\])(.+)$/gm, 'ul');
+    
+    // 处理有序列表
+    html = this.processMarkdownLists(html, /^\s*\d+\.\s+(.+)$/gm, 'ol');
+    
+    // 处理引用块
+    html = this.processMarkdownBlockquotes(html);
+    
+    // 处理分隔线
+    html = html.replace(/^\s*[-=*]{3,}\s*$/gm, '<hr>');
+    
+    // 处理粗体、斜体和删除线
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
     html = html.replace(/_(.*?)_/g, '<em>$1</em>');
-
-    // 删除线
     html = html.replace(/~~(.*?)~~/g, '<del>$1</del>');
-
-    // 行内代码
+    
+    // 处理行内代码
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // 代码块
-    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-
-    // 链接
-    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-
-    // 图片
-    html = html.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;" />');
-
-    // 无序列表
-    html = html.replace(/^\s*[-*+]\s+(.*)$/gim, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-
-    // 有序列表
-    html = html.replace(/^\s*\d+\.\s+(.*)$/gim, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
-
-    // 引用
-    html = html.replace(/^\s*>\s+(.*)$/gim, '<blockquote>$1</blockquote>');
-
-    // 分隔线
-    html = html.replace(/^\s*[-=*]{3,}\s*$/gim, '<hr>');
-
-    // 段落（处理换行）
-    html = html.replace(/\n\n/g, '</p><p>');
-    html = html.replace(/\n/g, '<br>');
-    html = '<p>' + html + '</p>';
-
-    // 清理空段落
-    html = html.replace(/<p><\/p>/g, '');
-    html = html.replace(/<p>\s*<\/p>/g, '');
-
+    
+    // 处理链接
+    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // 处理图片
+    html = html.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />');
+    
+    // 恢复代码块
+    html = html.replace(/%%CODEBLOCK_(\d+)%%/g, (match, id) => {
+      return codeBlocks[parseInt(id)];
+    });
+    
+    // 处理段落
+    const paragraphs = html.split(/\n{2,}/);
+    html = paragraphs.map(p => {
+      // 跳过已经是HTML标签的内容
+      if (p.trim().startsWith('<') && !p.trim().startsWith('<br>')) {
+        return p;
+      }
+      // 处理段落内的换行
+      return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+    
+    // 应用语法高亮的简单模拟
+    html = this.applyCodeHighlighting(html);
+    
     return html;
+  }
+  
+  // 处理Markdown表格
+  private processMarkdownTables(text: string): string {
+    // 匹配表格结构
+    return text.replace(/^([|].*[|]\s*\n[|][-:]+[-|:]*\s*\n)([|].*[|]\s*\n)*([|].*[|])/gm, (table) => {
+      const rows = table.trim().split('\n');
+      
+      // 提取表头行
+      const headerRow = rows[0];
+      const headerCells = headerRow.split('|').slice(1, -1).map(cell => cell.trim());
+      
+      // 提取分隔行，确定对齐方式
+      const separatorRow = rows[1];
+      const alignments = separatorRow.split('|').slice(1, -1).map(cell => {
+        const trimmed = cell.trim();
+        if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+        if (trimmed.endsWith(':')) return 'right';
+        return 'left';
+      });
+      
+      // 构建表头HTML
+      let tableHtml = '<table>\n<thead>\n<tr>\n';
+      headerCells.forEach((cell, index) => {
+        const align = alignments[index] ? ` style="text-align: ${alignments[index]}"` : '';
+        tableHtml += `<th${align}>${cell}</th>\n`;
+      });
+      tableHtml += '</tr>\n</thead>\n<tbody>\n';
+      
+      // 构建表格内容行
+      for (let i = 2; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.split('|').slice(1, -1).map(cell => cell.trim());
+        
+        tableHtml += '<tr>\n';
+        cells.forEach((cell, index) => {
+          const align = alignments[index] ? ` style="text-align: ${alignments[index]}"` : '';
+          tableHtml += `<td${align}>${cell}</td>\n`;
+        });
+        tableHtml += '</tr>\n';
+      }
+      
+      tableHtml += '</tbody>\n</table>';
+      return tableHtml;
+    });
+  }
+  
+  // 处理Markdown列表
+  private processMarkdownLists(text: string, pattern: RegExp, listType: 'ul' | 'ol'): string {
+    // 查找连续的列表项
+    const listMatches: {start: number, end: number, content: string}[] = [];
+    let match;
+    let lastIndex = 0;
+    const lines = text.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (pattern.test(line)) {
+        // 找到列表项的开始
+        if (lastIndex === 0) {
+          lastIndex = i;
+        }
+      } else if (lastIndex > 0 && line.trim() === '') {
+        // 列表结束
+        listMatches.push({
+          start: lastIndex,
+          end: i - 1,
+          content: lines.slice(lastIndex, i).join('\n')
+        });
+        lastIndex = 0;
+      }
+    }
+    
+    // 处理可能的最后一个列表
+    if (lastIndex > 0) {
+      listMatches.push({
+        start: lastIndex,
+        end: lines.length - 1,
+        content: lines.slice(lastIndex).join('\n')
+      });
+    }
+    
+    // 替换列表
+    let result = text;
+    for (let i = listMatches.length - 1; i >= 0; i--) {
+      const { start, end, content } = listMatches[i];
+      const listItems = content.replace(pattern, '<li>$1</li>');
+      const listHtml = `<${listType}>${listItems}</${listType}>`;
+      
+      const startPos = lines.slice(0, start).join('\n').length + (start > 0 ? 1 : 0);
+      const endPos = lines.slice(0, end + 1).join('\n').length;
+      
+      result = result.substring(0, startPos) + listHtml + result.substring(endPos);
+    }
+    
+    return result;
+  }
+  
+  // 处理Markdown引用块
+  private processMarkdownBlockquotes(text: string): string {
+    // 查找连续的引用行
+    const blockquoteMatches: {start: number, end: number, content: string}[] = [];
+    let lastIndex = 0;
+    const lines = text.split('\n');
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (/^\s*>\s+(.*)$/.test(line)) {
+        // 找到引用行的开始
+        if (lastIndex === 0) {
+          lastIndex = i;
+        }
+      } else if (lastIndex > 0) {
+        // 引用结束
+        blockquoteMatches.push({
+          start: lastIndex,
+          end: i - 1,
+          content: lines.slice(lastIndex, i).join('\n')
+        });
+        lastIndex = 0;
+      }
+    }
+    
+    // 处理可能的最后一个引用块
+    if (lastIndex > 0) {
+      blockquoteMatches.push({
+        start: lastIndex,
+        end: lines.length - 1,
+        content: lines.slice(lastIndex).join('\n')
+      });
+    }
+    
+    // 替换引用块
+    let result = text;
+    for (let i = blockquoteMatches.length - 1; i >= 0; i--) {
+      const { start, end, content } = blockquoteMatches[i];
+      const blockquoteContent = content.replace(/^\s*>\s+(.*)$/gm, '$1');
+      const blockquoteHtml = `<blockquote>${blockquoteContent}</blockquote>`;
+      
+      const startPos = lines.slice(0, start).join('\n').length + (start > 0 ? 1 : 0);
+      const endPos = lines.slice(0, end + 1).join('\n').length;
+      
+      result = result.substring(0, startPos) + blockquoteHtml + result.substring(endPos);
+    }
+    
+    return result;
+  }
+  
+  // 应用简单的代码高亮
+  private applyCodeHighlighting(html: string): string {
+    return html.replace(/<code([^>]*)>(.*?)<\/code>/gs, (match, attrs, code) => {
+      // 关键字高亮
+      let highlighted = code
+        .replace(/\b(function|return|if|for|while|var|let|const|class|import|export|from|async|await)\b/g, '<span class="hljs-keyword">$1</span>')
+        .replace(/(\'.*?\'|\".*?\")/g, '<span class="hljs-string">$1</span>')
+        .replace(/(\/\/.*?)(?:\n|$)/g, '<span class="hljs-comment">$1</span>')
+        .replace(/\b(\d+(\.\d+)?)\b/g, '<span class="hljs-number">$1</span>');
+      
+      return `<code${attrs}>${highlighted}</code>`;
+    });
   }
 
   // 键盘事件和失焦事件处理已移至事件委托中
@@ -1561,7 +1762,9 @@ class TableRowPreview {
             break;
           case 'preview':
             const markdownText = target.data('value');
-            this.showMarkdownPreview(markdownText);
+            const fieldItem = target.closest('.field-item');
+            const fieldId = fieldItem.data('field-id');
+            this.showMarkdownPreview(markdownText, fieldId);
             break;
         }
       });
@@ -1700,6 +1903,23 @@ class TableRowPreview {
         recordId,
         fields
       }, rowIndex);
+      
+      // 如果有上次预览的字段ID，自动预览新行中相同字段的内容
+      if (this.lastPreviewedFieldId && fields[this.lastPreviewedFieldId]) {
+        const fieldValue = this.getRawTextValue(this.fieldMetaList.find(f => f.id === this.lastPreviewedFieldId)?.type, fields[this.lastPreviewedFieldId]);
+        // 无论是否包含Markdown语法，都显示预览
+        if (fieldValue) {
+          // 使用setTimeout确保DOM已经完全渲染
+          setTimeout(() => {
+            // 确保lastPreviewedFieldId不为null
+            if (this.lastPreviewedFieldId) {
+              this.showMarkdownPreview(fieldValue, this.lastPreviewedFieldId);
+            } else {
+              this.showMarkdownPreview(fieldValue);
+            }
+          }, 100);
+        }
+      }
     } catch (error) {
       console.error(i18next.t('loadRowDataFailed'), error);
       this.showError(i18next.t('loadFailedPermission'));
