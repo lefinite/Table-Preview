@@ -28,6 +28,8 @@ class TableRowPreview {
   private selectionChangeHandler: ((event: any) => Promise<void>) | null = null;
   private isInitialized: boolean = false;
   private lastPreviewedFieldId: string | null = null; // 记录上次预览的字段ID
+  private recordIdList: string[] = []; // 缓存当前视图的记录ID列表
+  private currentRecordIndex: number = -1; // 当前记录在列表中的索引
 
   private constructor() {
     this.init();
@@ -44,6 +46,9 @@ class TableRowPreview {
     // 注意：飞书API目前不支持移除选择变化监听器
     // 通过单例模式和初始化标志来避免重复注册
     this.selectionChangeHandler = null;
+    
+    // 清理键盘事件监听器
+    $(document).off('keydown.tableNavigation');
   }
 
   private showLoading(): void {
@@ -1771,6 +1776,35 @@ class TableRowPreview {
       // 清理旧的监听器
       this.cleanup();
       
+      // 添加键盘事件监听器
+      $(document).on('keydown.tableNavigation', (e) => {
+        // 只有在有选中记录时才响应键盘事件
+        if (!this.currentTableId || !this.currentRecordId) {
+          return;
+        }
+        
+        // 检查是否在编辑模式下，如果是则不响应导航键
+        if ($('.field-edit:visible').length > 0) {
+          return;
+        }
+        
+        // 检查是否有模态框打开，如果有则不响应导航键
+        if ($('.modal:visible').length > 0) {
+          return;
+        }
+        
+        switch (e.key) {
+          case 'ArrowLeft':
+            e.preventDefault();
+            this.navigateToPreviousRow();
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            this.navigateToNextRow();
+            break;
+        }
+      });
+      
       // 使用事件委托处理图片点击事件
       $('#fieldsContainer').on('click', '.attachment-image', (e) => {
         e.preventDefault();
@@ -1845,7 +1879,6 @@ class TableRowPreview {
         if (event.data?.tableId && event.data?.recordId) {
           const newTableId = event.data.tableId;
           const newRecordId = event.data.recordId;
-          this.showLoading();
           try {
             await this.loadRowData(newTableId, newRecordId);
             // 只有在成功加载数据后才更新当前状态
@@ -1856,9 +1889,12 @@ class TableRowPreview {
             // 加载失败时保持原有状态，错误信息已在loadRowData中处理
           }
         } else {
-          this.currentTableId = null;
-          this.currentRecordId = null;
-          this.showNoSelection();
+          // 失焦时不清空预览内容，保持最后预览的状态
+          // 只有在没有任何预览内容时才显示无选择状态
+          if (!this.currentTableId || !this.currentRecordId) {
+            this.showNoSelection();
+          }
+          // 注意：不清空 currentTableId 和 currentRecordId，保持最后的状态
         }
       };
       
@@ -1883,8 +1919,12 @@ class TableRowPreview {
       const { tableId, recordId } = event.data;
       
       if (!tableId || !recordId) {
-        this.currentRecordId = null; // 清空当前记录ID
-        this.showNoSelection();
+        // 失焦时不清空预览内容，保持最后预览的状态
+        // 只有在没有任何预览内容时才显示无选择状态
+        if (!this.currentTableId || !this.currentRecordId) {
+          this.showNoSelection();
+        }
+        // 注意：不清空 currentTableId 和 currentRecordId，保持最后的状态
         return;
       }
 
@@ -1892,9 +1932,6 @@ class TableRowPreview {
         return; // 相同的选择，不需要重新加载
       }
 
-      // 立即显示加载状态，提高用户体验
-      this.showLoading();
-      
       // 更新当前记录ID
       const needReloadMetadata = tableId !== this.currentTableId;
       this.currentTableId = tableId;
@@ -1909,8 +1946,6 @@ class TableRowPreview {
   }
 
   private async loadRowData(tableId: string, recordId: string) {
-    this.showLoading();
-    
     // 清空字段值缓存，确保获取最新数据
     this.currentFieldValues = {};
     
@@ -1943,7 +1978,30 @@ class TableRowPreview {
           .map(id => fieldMap.get(id)!);
         
         this.tableName = tableMeta.name;
+        
+        // 获取当前视图的记录ID列表（用于导航）
+         try {
+           const recordIdList = await currentView.getVisibleRecordIdList();
+           this.recordIdList = recordIdList.filter((id): id is string => id !== undefined);
+         } catch (error) {
+           console.warn('Failed to get record list for navigation:', error);
+           this.recordIdList = [];
+         }
       }
+      
+      // 更新当前记录在列表中的索引
+       this.currentRecordIndex = this.recordIdList.indexOf(recordId);
+       if (this.currentRecordIndex === -1 && this.recordIdList.length === 0) {
+         // 如果记录列表为空，尝试重新获取
+         try {
+           const currentView = await table.getViewById((await table.getViewMetaList())[0].id);
+           const recordIdList = await currentView.getVisibleRecordIdList();
+           this.recordIdList = recordIdList.filter((id): id is string => id !== undefined);
+           this.currentRecordIndex = this.recordIdList.indexOf(recordId);
+         } catch (error) {
+           console.warn('Failed to refresh record list:', error);
+         }
+       }
 
       // 获取记录数据
       const fields = record.fields;
@@ -2074,6 +2132,48 @@ class TableRowPreview {
 
 
   // refreshCurrentRow方法已删除，因为刷新按钮已移除
+  
+  /**
+   * 导航到上一行记录
+   */
+  private async navigateToPreviousRow(): Promise<void> {
+    if (!this.currentTableId || this.recordIdList.length === 0 || this.currentRecordIndex <= 0) {
+      return;
+    }
+    
+    const previousRecordId = this.recordIdList[this.currentRecordIndex - 1];
+    if (previousRecordId) {
+      try {
+        // 直接加载数据并更新当前记录
+        await this.loadRowData(this.currentTableId, previousRecordId);
+        this.currentRecordId = previousRecordId;
+        this.currentRecordIndex = this.currentRecordIndex - 1;
+      } catch (error) {
+        console.error('Failed to navigate to previous row:', error);
+      }
+    }
+  }
+ 
+ /**
+   * 导航到下一行记录
+   */
+  private async navigateToNextRow(): Promise<void> {
+    if (!this.currentTableId || this.recordIdList.length === 0 || this.currentRecordIndex >= this.recordIdList.length - 1) {
+      return;
+    }
+    
+    const nextRecordId = this.recordIdList[this.currentRecordIndex + 1];
+    if (nextRecordId) {
+      try {
+        // 直接加载数据并更新当前记录
+        await this.loadRowData(this.currentTableId, nextRecordId);
+        this.currentRecordId = nextRecordId;
+        this.currentRecordIndex = this.currentRecordIndex + 1;
+      } catch (error) {
+        console.error('Failed to navigate to next row:', error);
+      }
+    }
+  }
 }
 
 // 初始化应用
