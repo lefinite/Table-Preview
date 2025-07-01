@@ -213,9 +213,9 @@ body {
 
 /* 预览卡片 */
 .preview-card {
-  width: calc(100% - 40px);
-  max-width: 600px;
-  margin: 8px 20px 20px 20px;
+  width: calc(100% - 24px);
+  max-width: 800px;
+  margin: 8px 12px 16px 12px;
   min-height: fit-content;
   padding: 16px;
   box-sizing: border-box;
@@ -334,20 +334,20 @@ body {
   }
   
   #app {
-    padding: 12px;
+    padding: 8px;
   }
   
   .status-card, .loading-card, .error-card {
-    padding: 20px;
+    padding: 16px;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
   }
   
   .preview-card {
-    padding: 12px;
-    width: calc(100% - 24px);
-    margin: 12px;
+    padding: 10px;
+    width: calc(100% - 16px);
+    margin: 8px;
     overflow-x: hidden;
   }
   
@@ -389,7 +389,7 @@ body {
 
 /* 字段项 - 简化选择器层级 */
 .field-item {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   position: relative;
   /* 移除过渡效果以提升滚动性能 */
   animation: fadeIn 0.2s ease forwards;
@@ -418,7 +418,7 @@ body {
 /* 字段头部 - 简化选择器层级 */
 .field-header {
   position: relative;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -500,8 +500,8 @@ body {
 }
 
 .field-value {
-    padding: 12px 14px;
-    border-radius: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
     background-color: var(--system-gray6);
     font-size: 14px;
     line-height: 1.5;
@@ -912,8 +912,8 @@ body {
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
-  max-width: 900px;
-  max-height: 85vh;
+  max-width: 1000px;
+  max-height: 90vh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -981,7 +981,7 @@ body {
 }
 
 .markdown-preview-body {
-  padding: 32px 40px;
+  padding: 24px 32px;
   overflow-y: auto;
   flex: 1;
   line-height: 1.7;

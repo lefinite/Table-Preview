@@ -1904,8 +1904,8 @@ class TableRowPreview {
         fields
       }, rowIndex);
       
-      // 如果有上次预览的字段ID，自动预览新行中相同字段的内容
-      if (this.lastPreviewedFieldId && fields[this.lastPreviewedFieldId]) {
+      // 如果有上次预览的字段ID，并且预览框已经打开，才自动预览新行中相同字段的内容
+      if (this.lastPreviewedFieldId && fields[this.lastPreviewedFieldId] && $('.markdown-preview-modal').length > 0) {
         const fieldValue = this.getRawTextValue(this.fieldMetaList.find(f => f.id === this.lastPreviewedFieldId)?.type, fields[this.lastPreviewedFieldId]);
         // 无论是否包含Markdown语法，都显示预览
         if (fieldValue) {
