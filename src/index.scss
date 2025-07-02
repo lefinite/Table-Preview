@@ -19,6 +19,8 @@ html, body {
   width: 100%;
   overflow-x: hidden;
   max-width: 100vw;
+  height: auto;
+  min-height: 100vh;
 }
 
 /* 在文件顶部添加 iOS 风格的颜色变量 */
@@ -50,7 +52,7 @@ body {
   overflow-y: auto;
   
   /* 滚动优化 */
-  overscroll-behavior: contain;
+  overscroll-behavior-y: none; /* 允许垂直滚动穿透 */
   scroll-behavior: auto;
   
   /* 隐藏滚动条但保持滚动功能 */
@@ -61,13 +63,11 @@ body {
 #app {
   width: 100%;
   max-width: 100vw;
-  height: 100vh;
   padding: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  overflow-y: auto;
   overflow-x: hidden;
   /* 移除smooth滚动以提升性能 */
   scroll-behavior: auto;
@@ -78,7 +78,6 @@ body {
   /* 移除-webkit-overflow-scrolling以避免边界停顿 */
   backface-visibility: hidden;
   /* 添加滚动边界优化 */
-  overscroll-behavior: contain;
   scroll-snap-stop: normal;
   
   /* 隐藏滚动条但保持滚动功能 */
@@ -569,10 +568,10 @@ body {
       box-sizing: border-box;
       background-color: var(--system-gray6-lighter); // 使用更淡的背景色
       line-height: 1.5; // 确保与预览框一致
-      word-wrap: normal !important;
-      word-break: normal !important; // 使用normal确保只在单词间换行
+      word-wrap: break-word !important;
+      word-break: break-word !important; // 与预览状态保持一致
       white-space: pre-wrap !important;
-      overflow-wrap: normal !important;
+      overflow-wrap: break-word !important;
       hyphens: none !important; // 禁用连字符
       unicode-bidi: isolate !important; // 确保Unicode字符正确显示
       overflow-x: hidden !important; // 隐藏水平滚动条
@@ -585,7 +584,7 @@ body {
       
       .CodeMirror-scroll {
         min-height: auto; // 移除固定最小高度，使用内容自适应
-        padding: 11px 13px; // 减少1px内边距以补偿边框宽度
+        padding: 11px 13px; // 恢复原始padding，与预览状态边框+内边距对齐
         margin-bottom: 0 !important; // 移除底部边距
         box-sizing: border-box;
         overflow-y: hidden !important; // 禁用垂直滚动条，使编辑器高度完全适应内容
@@ -594,10 +593,10 @@ body {
       
       .CodeMirror-lines {
         padding: 0; // 保持为0，padding由CodeMirror-scroll控制
-        word-wrap: normal !important;
-        word-break: normal !important; // 使用normal确保只在单词间换行
+        word-wrap: break-word !important;
+        word-break: break-word !important; // 与预览状态保持一致
         white-space: pre-wrap !important;
-        overflow-wrap: normal !important;
+        overflow-wrap: break-word !important;
         hyphens: none !important; // 禁用连字符
         unicode-bidi: isolate !important; // 确保Unicode字符正确显示
       }
@@ -606,10 +605,10 @@ body {
         padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
         line-height: 1.5 !important;
-        word-wrap: normal !important;
-        word-break: normal !important; // 使用normal确保只在单词间换行
+        word-wrap: break-word !important;
+        word-break: break-word !important; // 与预览状态保持一致
         white-space: pre-wrap !important;
-        overflow-wrap: normal !important;
+        overflow-wrap: break-word !important;
         hyphens: none !important; // 禁用连字符
         unicode-bidi: isolate !important; // 确保Unicode字符正确显示
       }
@@ -623,10 +622,10 @@ body {
       .CodeMirror-cursor {
         margin-left: 0;
       }
-      
+
       // 修复CodeMirror内部元素的边距问题
       .CodeMirror-sizer {
-        margin-left: 0 !important;
+        margin-left: -4px !important; // 应用-4px负边距以补偿CodeMirror行的默认缩进
         padding-left: 0 !important;
         margin-bottom: 0 !important; // 移除底部边距
         padding-bottom: 0 !important; // 移除底部内边距
@@ -639,15 +638,13 @@ body {
       
       // 确保文本对齐方式一致
       .CodeMirror-line {
-        padding-left: 0 !important;
-        text-indent: 0 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif !important;
         padding-bottom: 0 !important; // 移除底部内边距
         margin-bottom: 0 !important; // 移除底部外边距
-        word-wrap: normal !important;
-        word-break: normal !important; // 使用normal确保只在单词间换行
+        word-wrap: break-word !important;
+        word-break: break-word !important; // 与预览状态保持一致
         white-space: pre-wrap !important;
-        overflow-wrap: normal !important;
+        overflow-wrap: break-word !important;
         hyphens: none !important; // 禁用连字符
         unicode-bidi: isolate !important; // 确保Unicode字符正确显示
         line-height: 1.5 !important; // 确保行高与预览框一致

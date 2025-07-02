@@ -825,9 +825,6 @@ class TableRowPreview {
     tempPreview.className = 'field-value';
     tempPreview.style.position = 'absolute';
     tempPreview.style.visibility = 'hidden';
-    if (width) {
-      tempPreview.style.width = width + 'px';
-    }
     // 确保与编辑器完全相同的文本处理方式
     tempPreview.style.whiteSpace = 'pre-wrap';
     tempPreview.style.wordBreak = 'break-word';
@@ -839,6 +836,12 @@ class TableRowPreview {
     tempPreview.style.paddingBottom = '12px'; // 确保底部内边距与顶部一致
     tempPreview.style.marginBottom = '0'; // 确保没有底部外边距
     tempPreview.style.boxSizing = 'border-box';
+    
+    if (width) {
+      // width参数是内容区域宽度，需要加上padding来设置总宽度
+      const totalWidth = width + 28; // 左右padding各14px
+      tempPreview.style.width = totalWidth + 'px';
+    }
     tempPreview.style.lineHeight = '1.5';
     tempPreview.style.fontSize = '14px';
     tempPreview.style.fontFamily = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif';
@@ -896,6 +899,21 @@ class TableRowPreview {
     const fieldId = fieldItem.data('field-id');
     const currentValue = this.getCurrentFieldValue(fieldId);
     
+    // 获取当前字段在视口中的位置
+    const fieldRect = fieldItem[0].getBoundingClientRect();
+    
+    // 创建一个样式元素，只针对编辑器相关元素禁用滚动行为
+    const preventScrollStyle = document.createElement('style');
+    preventScrollStyle.textContent = `
+      .CodeMirror, .CodeMirror *, .field-edit, .field-edit * { 
+        scroll-behavior: auto !important;
+      }
+      .CodeMirror-scroll {
+        overflow: hidden !important;
+      }
+    `;
+    document.head.appendChild(preventScrollStyle);
+    
     // 在修改DOM之前，创建一个MutationObserver来监听DOM变化并立即恢复滚动位置
     const observer = new MutationObserver(() => {
       this.restoreScrollPositions(scrollPositions, fieldItem);
@@ -913,6 +931,9 @@ class TableRowPreview {
     
     // 停止观察
     observer.disconnect();
+    
+    // 移除临时样式
+    document.head.removeChild(preventScrollStyle);
     
     // 使用多个延迟尝试恢复滚动位置，确保在各种情况下都能正确恢复
     // 立即尝试恢复
@@ -973,8 +994,13 @@ class TableRowPreview {
       // 获取当前内容
        const currentValue = textarea.value || '';
        
+       // 获取textarea的内容区域宽度
+       const textareaStyle = window.getComputedStyle(textarea);
+       const borderWidth = parseFloat(textareaStyle.borderLeftWidth) + parseFloat(textareaStyle.borderRightWidth);
+       const contentWidth = textarea.offsetWidth - borderWidth;
+       
        // 使用辅助函数计算高度
-       const minHeight = this.calculatePreviewHeight(currentValue, textarea.offsetWidth);
+       const minHeight = this.calculatePreviewHeight(currentValue, contentWidth);
       
       // 在创建编辑器前恢复滚动位置
       if (scrollPositions) {
@@ -1080,6 +1106,10 @@ class TableRowPreview {
         simplemde.codemirror.setOption('lineNumbers', false);
         simplemde.codemirror.setOption('viewportMargin', Infinity);
         
+        // 启用拖拽功能
+        simplemde.codemirror.setOption('dragDrop', true);
+        simplemde.codemirror.setOption('allowDropFileTypes', []);
+        
         // 确保不应用任何特殊格式
         const cmElement = simplemde.codemirror.getWrapperElement();
         if (cmElement) {
@@ -1120,9 +1150,15 @@ class TableRowPreview {
              contentToCalculate += '\u200B'; // 添加零宽空格确保换行被计算
            }
            
+           // 获取编辑器内容区域的实际宽度（减去边框和内边距）
+           const editorWrapper = simplemde.codemirror.getWrapperElement();
+           const editorStyle = window.getComputedStyle(editorWrapper);
+           const borderWidth = parseInt(editorStyle.borderLeftWidth) + parseInt(editorStyle.borderRightWidth);
+           const contentWidth = editorWrapper.offsetWidth - borderWidth;
+           
            const previewHeight = self.calculatePreviewHeight(
              contentToCalculate,
-             simplemde.codemirror.getWrapperElement().offsetWidth
+             contentWidth
            );
            
            // 设置编辑器高度
@@ -1138,13 +1174,52 @@ class TableRowPreview {
       setTimeout(adjustHeight, 100);
       
       // 设置失焦自动保存
+      let blurTimeout: number | null = null;
+      let isDragging = false;
+      
+      // 监听拖拽开始事件
+      simplemde.codemirror.on('dragstart', () => {
+        isDragging = true;
+      });
+      
+      // 监听拖拽结束事件
+      simplemde.codemirror.on('dragend', () => {
+        isDragging = false;
+      });
+      
+      // 监听拖拽放置事件
+      simplemde.codemirror.on('drop', () => {
+        isDragging = false;
+      });
+      
       simplemde.codemirror.on('blur', () => {
-        setTimeout(() => {
+        // 如果正在拖拽，不触发自动保存
+        if (isDragging) {
+          return;
+        }
+        
+        // 清除之前的定时器
+        if (blurTimeout) {
+          clearTimeout(blurTimeout);
+        }
+        
+        // 延迟检查是否真正失焦
+        blurTimeout = setTimeout(() => {
           const fieldEdit = fieldItem.find('.field-edit');
-          if (fieldEdit.is(':visible')) {
+          // 检查编辑器是否仍然可见且确实失去焦点，且不在拖拽状态
+          if (fieldEdit.is(':visible') && !simplemde.codemirror.hasFocus() && !isDragging) {
             this.saveMarkdownField(fieldItem, simplemde);
           }
-        }, 200);
+          blurTimeout = null;
+        }, 300);
+      });
+      
+      // 当重新获得焦点时，取消自动保存
+      simplemde.codemirror.on('focus', () => {
+        if (blurTimeout) {
+          clearTimeout(blurTimeout);
+          blurTimeout = null;
+        }
       });
       
       // 设置键盘事件处理
@@ -1170,9 +1245,15 @@ class TableRowPreview {
             simplemde.codemirror.refresh();
             // 强制计算包含新行的高度
             const content = simplemde.value();
+            // 获取编辑器内容区域的实际宽度（减去边框）
+            const editorWrapper = simplemde.codemirror.getWrapperElement();
+            const editorStyle = window.getComputedStyle(editorWrapper);
+            const borderWidth = parseInt(editorStyle.borderLeftWidth) + parseInt(editorStyle.borderRightWidth);
+            const contentWidth = editorWrapper.offsetWidth - borderWidth;
+            
             const previewHeight = self.calculatePreviewHeight(
               content + '\n\u200B', // 确保计算高度时考虑额外的一行
-              simplemde.codemirror.getWrapperElement().offsetWidth
+              contentWidth
             );
             
             // 设置编辑器高度
