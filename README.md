@@ -11,6 +11,8 @@
 支持双击编辑功能，提供优雅的Markdown编辑体验，完整支持Markdown语法和键盘快捷键
 ![Markdown edit](docs/assets/Markdown_edit.gif)
 
+自动检测文本框内的内容是否有Markdown语法，支持实时预览
+![Markdown edit](docs/assets/Markdown_Preview.gif)
 
 ## ✨ 功能特点
 
