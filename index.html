@@ -10,7 +10,15 @@
     <!-- 状态卡片：未选择行 -->
     <div id="statusCard" class="status-card">
       <div class="status-content">
-        <div class="status-icon">📄</div>
+        <div class="status-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="#8E8E93" stroke-width="1.5" fill="none"/>
+            <path d="M14 2V8H20" stroke="#8E8E93" stroke-width="1.5" fill="none"/>
+            <path d="M16 13H8" stroke="#8E8E93" stroke-width="1.5"/>
+            <path d="M16 17H8" stroke="#8E8E93" stroke-width="1.5"/>
+            <path d="M10 9H8" stroke="#8E8E93" stroke-width="1.5"/>
+          </svg>
+        </div>
         <p data-i18n="selectRowDesc">在多维表格中选择任意行来预览其内容</p>
       </div>
     </div>
@@ -31,7 +39,13 @@
     <!-- 错误卡片 -->
     <div id="errorCard" class="error-card" style="display: none;">
       <div class="error-content">
-        <div class="error-icon">❌</div>
+        <div class="error-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#FF3B30" stroke-width="1.5" fill="none"/>
+            <path d="M15 9L9 15" stroke="#FF3B30" stroke-width="1.5"/>
+            <path d="M9 9L15 15" stroke="#FF3B30" stroke-width="1.5"/>
+          </svg>
+        </div>
         <h3 data-i18n="loadFailed">加载失败</h3>
         <p id="errorMessage" data-i18n="loadFailedDefault">数据加载失败，请重试</p>
       </div>
