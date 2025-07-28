@@ -1957,6 +1957,19 @@ class TableRowPreview {
       
       // 创建新的监听器
       this.selectionChangeHandler = async (event) => {
+        // 检查是否有正在编辑的内容需要保存
+        const visibleEditField = $('.field-edit:visible');
+        if (visibleEditField.length > 0) {
+          // 找到正在编辑的字段项
+          const fieldItem = visibleEditField.closest('.field-item');
+          const textarea = fieldItem.find('.markdown-editor')[0] as HTMLTextAreaElement;
+          
+          // 如果有SimpleMDE实例，保存内容
+          if (textarea && (textarea as any).simplemde) {
+            await this.saveMarkdownField(fieldItem, (textarea as any).simplemde);
+          }
+        }
+        
         if (event.data?.tableId && event.data?.recordId) {
           const newTableId = event.data.tableId;
           const newRecordId = event.data.recordId;
@@ -1997,6 +2010,19 @@ class TableRowPreview {
 
   private async handleSelectionChange(event: any) {
     try {
+      // 检查是否有正在编辑的内容需要保存
+      const visibleEditField = $('.field-edit:visible');
+      if (visibleEditField.length > 0) {
+        // 找到正在编辑的字段项
+        const fieldItem = visibleEditField.closest('.field-item');
+        const textarea = fieldItem.find('.markdown-editor')[0] as HTMLTextAreaElement;
+        
+        // 如果有SimpleMDE实例，保存内容
+        if (textarea && (textarea as any).simplemde) {
+          await this.saveMarkdownField(fieldItem, (textarea as any).simplemde);
+        }
+      }
+      
       const { tableId, recordId } = event.data;
       
       if (!tableId || !recordId) {
